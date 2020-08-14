@@ -1,0 +1,149 @@
+proc celldef() {
+  topol()
+  subsets()
+  geom()
+  biophys()
+  geom_nseg()
+}
+
+create soma, prim[6], sec[4], tert[8]
+
+proc topol() { local i
+  connect prim(0), soma(0)
+  connect prim[1](0), soma(1)
+  connect prim[2](0), prim(1)
+  connect prim[3](0), prim[2](1)
+  connect prim[4](0), prim[1](1)
+  connect prim[5](0), prim[4](1)
+  for i = 0, 1 connect sec[i](0), prim[3](1)
+  for i = 2, 3 connect sec[i](0), prim[5](1)
+  for i = 0, 1 connect tert[i](0), sec(1)
+  for i = 2, 3 connect tert[i](0), sec[1](1)
+  for i = 4, 5 connect tert[i](0), sec[2](1)
+  for i = 6, 7 connect tert[i](0), sec[3](1)
+  basic_shape()
+}
+proc basic_shape() {
+  soma {pt3dclear() pt3dadd(0, 0, 0, 1) pt3dadd(15, 0, 0, 1)}
+  prim {pt3dclear() pt3dadd(0, 0, 0, 1) pt3dadd(-59, 0, 0, 1)}
+  prim[1] {pt3dclear() pt3dadd(15, 0, 0, 1) pt3dadd(75, 0, 0, 1)}
+  prim[2] {pt3dclear() pt3dadd(-59, 0, 0, 1) pt3dadd(-59, 30, 0, 1)}
+  prim[3] {pt3dclear() pt3dadd(-59, 30, 0, 1) pt3dadd(-104, 30, 0, 1)}
+  sec {pt3dclear() pt3dadd(-104, 30, 0, 1) pt3dadd(-119, 60, 0, 1)}
+  tert {pt3dclear() pt3dadd(-119, 60, 0, 1) pt3dadd(-164, 105, 0, 1)}
+  tert[1] {pt3dclear() pt3dadd(-119, 60, 0, 1) pt3dadd(-89, 120, 0, 1)}
+  sec[1] {pt3dclear() pt3dadd(-104, 30, 0, 1) pt3dadd(-119, 0, 0, 1)}
+  tert[2] {pt3dclear() pt3dadd(-119, 0, 0, 1) pt3dadd(-179, -29, 0, 1)}
+  tert[3] {pt3dclear() pt3dadd(-119, 0, 0, 1) pt3dadd(-89, -59, 0, 1)}
+  prim[4] {pt3dclear() pt3dadd(75, 0, 0, 1) pt3dadd(75, -29, 0, 1)}
+  prim[5] {pt3dclear() pt3dadd(75, -29, 0, 1) pt3dadd(120, -29, 0, 1)}
+  sec[2] {pt3dclear() pt3dadd(120, -29, 0, 1) pt3dadd(135, 0, 0, 1)}
+  tert[4] {pt3dclear() pt3dadd(135, 0, 0, 1) pt3dadd(165, 60, 0, 1)}
+  tert[5] {pt3dclear() pt3dadd(135, 0, 0, 1) pt3dadd(105, 60, 0, 1)}
+  sec[3] {pt3dclear() pt3dadd(120, -29, 0, 1) pt3dadd(135, -59, 0, 1)}
+  tert[6] {pt3dclear() pt3dadd(135, -59, 0, 1) pt3dadd(180, -104, 0, 1)}
+  tert[7] {pt3dclear() pt3dadd(135, -59, 0, 1) pt3dadd(105, -119, 0, 1)}
+}
+
+objref all, dendrites, proximal, secondary, tertiary, primary1, primary2
+objref primary3
+proc subsets() { local i
+  objref all, dendrites, proximal, secondary, tertiary, primary1, primary2
+  objref primary3
+  all = new SectionList()
+    soma all.append()
+    for i=0, 5 prim[i] all.append()
+    for i=0, 3 sec[i] all.append()
+    for i=0, 7 tert[i] all.append()
+
+  dendrites = new SectionList()
+    for i=0, 5 prim[i] dendrites.append()
+    for i=0, 3 sec[i] dendrites.append()
+    for i=0, 7 tert[i] dendrites.append()
+
+  proximal = new SectionList()
+    soma proximal.append()
+    for i=0, 2 prim[i] proximal.append()
+    prim[4] proximal.append()
+
+  secondary = new SectionList()
+    for i=0, 3 sec[i] secondary.append()
+
+  tertiary = new SectionList()
+    for i=0, 7 tert[i] tertiary.append()
+
+  primary1 = new SectionList()
+    for i=0, 1 prim[i] primary1.append()
+
+  primary2 = new SectionList()
+    prim[2] primary2.append()
+    prim[4] primary2.append()
+
+  primary3 = new SectionList()
+    prim[3] primary3.append()
+    prim[5] primary3.append()
+
+}
+proc geom() {
+  forsec secondary {  L = 20  diam = 1  }
+  forsec tertiary {  L = 140  diam = 0.8  }
+  forsec primary1 {  L = 40  diam = 2.5  }
+  forsec primary2 {  L = 10  diam = 2  }
+  forsec primary3 {  L = 30  diam = 2  }
+  soma {  L = 25  diam = 25  }
+}
+proc geom_nseg() {
+   forsec secondary { nseg = 1  }
+   forsec tertiary { nseg = 5  }
+   forsec primary1 { nseg = 3  }
+   forsec primary2 { nseg = 1  }
+   forsec primary3 { nseg = 3  }
+   soma { nseg = 3  }
+}
+proc biophys() {
+  forsec all {
+    Ra = 400
+    cm = 1
+    insert bk
+      gbar_bk = 500
+    insert cal
+      pbar12_cal = 1e-007
+      pbar13_cal = 5e-9
+    insert can
+      pbar_can = 1.2e-006
+    insert car
+      pbar_car = 5e-007
+    insert pmp
+	  kb = 200
+    insert ih
+      gbar_ih = 0.5
+    insert kdr
+      gbar_kdr = 20
+    insert naf
+      gbar_naf = 250
+    insert nal
+      gbar_nal = 0.135
+	insert nap
+	  gbar_nap = 0.07
+    insert sk
+      gbar_sk = 3
+    insert lk
+      g_lk = 0.2
+      e_lk = -60
+	cao = 2.0
+	ek = -90
+  }
+  forsec dendrites {
+	kb = 96
+    insert cat
+      pbar_cat = 1e-007
+  }
+  forsec proximal {
+    insert ka
+      gbar_ka = 24.5
+  }
+}
+access soma
+
+celldef()
+celsius = 35
